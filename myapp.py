@@ -13,7 +13,8 @@ from streamlit_qrcode_scanner import qrcode_scanner
 load_dotenv()
 
 def get_connection():
-    return psycopg2.connect(os.getenv("DATABASE_URL"))
+    # Streamlit Cloud의 Secrets에서 직접 주소를 가져옵니다.
+    return psycopg2.connect(st.secrets["DATABASE_URL"])
 
 def run_query(query, params=None, fetch=False):
     with get_connection() as conn:
