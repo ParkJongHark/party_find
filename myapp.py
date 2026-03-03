@@ -157,7 +157,7 @@ else:
                     {"mid": h[0]},
                     fetch=True
                 )
-                conf_count = len([m for m in mems if m[1] in ('confirmed', 'pending')]) if mems else 0
+                conf_count = len([m for m in mems if m[1] == 'confirmed']) if mems else 0
                 st.write(f"🔥 현재 출석 인원: **{conf_count} / {h[2]}**")
 
                 if st.button("📸 QR 출석체크 시작", key=f"btn_scan_{h[0]}"):
@@ -169,11 +169,21 @@ else:
                         if sc_val.startswith("USER:"):
                             _, mid, uid = sc_val.split(":")
                             if mid == h[0]:
-                                run_query(
-                                    "UPDATE attendance SET status='confirmed' WHERE meeting_id=:mid AND user_id=:uid",
-                                    {"mid": mid, "uid": uid}
+                                already = run_query(
+                                    "SELECT status FROM attendance WHERE meeting_id=:mid AND user_id=:uid",
+                                    {"mid": mid, "uid": uid},
+                                    fetch=True
                                 )
-                                st.success("출석 인정!")
+                                if already and already[0][0] == 'pending':
+                                    run_query(
+                                        "UPDATE attendance SET status='confirmed' WHERE meeting_id=:mid AND user_id=:uid",
+                                        {"mid": mid, "uid": uid}
+                                    )
+                                    st.success("출석 인정!")
+                                elif already and already[0][0] == 'confirmed':
+                                    st.info("이미 출석 처리된 파티원이에요.")
+                                else:
+                                    st.error("❌ 신청하지 않은 사람이에요.")
                                 st.session_state[f"scan_active_{h[0]}"] = False
                                 st.rerun()
                             else:
