@@ -17,14 +17,10 @@ load_dotenv()
 @st.cache_resource
 def get_engine():
     return create_engine(
-        st.secrets["DATABASE_URL"],
+        st.secrets["DATABASE_URL"], 
         pool_pre_ping=True,
-        connect_args={
-            "connect_timeout": 10,
-            "sslmode": "require"
-        }
+        connect_args={"connect_timeout": 10}
     )
-
 
 def run_query(query, params=None, fetch=False):
     engine = get_engine()
@@ -121,17 +117,21 @@ else:
                     col1.subheader(m[1])
                     col1.write(f"📝 {m[6]}")
                     col1.caption(f"⏰ {m[7].strftime('%H:%M')} ~ {m[8].strftime('%H:%M')}")
+                    col1.caption(f"👥 {m[5]} / {m[2]}명")
                     my_status = run_query(
                         "SELECT status FROM attendance WHERE meeting_id=:mid AND user_id=:uid",
                         {"mid": m[0], "uid": st.session_state.user['id']},
                         fetch=True
                     )
+                    is_full = m[5] >= m[2]
                     if my_status:
                         if my_status[0][0] == 'pending':
                             if col2.button("내 QR보기", key=f"qr_{m[0]}"):
                                 st.image(generate_qr(f"USER:{m[0]}:{st.session_state.user['id']}"), width=150)
                         else:
                             col2.success("출석완료")
+                    elif is_full:
+                        col2.error("마감")
                     elif m[3] == '모집중':
                         if col2.button("참여", key=f"join_{m[0]}"):
                             run_query(
