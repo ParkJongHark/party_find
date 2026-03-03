@@ -1,0 +1,30 @@
+Metadata-Version: 2.1
+Name: streamlit-qrcode-scanner
+Version: 0.1.2
+Summary: QRCode scanner use html5qrcode lib
+Home-page: https://github.com/phamxtien/streamlit_qrcode_scanner
+Author: Pham Xuan Tien
+Author-email: phamxtien@gmail.com
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: streamlit (>=1.15)
+Requires-Dist: jinja2
+
+# streamlit_qrcode_scanner
+A Qrcode Scanner with back camera as default  
+Use https://github.com/mebjas/html5-qrcode  
+
+## Example:
+import streamlit as st  
+from streamlit_qrcode_scanner import qrcode_scanner  
+
+qr_code = qrcode_scanner(key='qrcode_scanner')  
+
+if qr_code:  
+    st.write(qr_code)  
+    
+
+
