@@ -40,14 +40,14 @@ def get_time_options():
     return options
 
 # UI 설정
-st.set_page_config(page_title="여수 모임 하이패스", layout="centered")
+st.set_page_config(page_title="partyfind", layout="centered")
 
 if "user" not in st.session_state:
     st.session_state.user = None
 
 # --- [1. 로그인 및 회원가입] ---
 if st.session_state.user is None:
-    st.title("👋 여수 모임 하이패스")
+    st.title("👋 partyfind")
     with st.form("login_form"):
         u_nick = st.text_input("닉네임")
         u_phone = st.text_input("전화번호 (예: 01012345678)")
