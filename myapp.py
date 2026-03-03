@@ -4,7 +4,8 @@ from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 import qrcode
 from PIL import Image
-from io import BytesIO  # 이 줄이 있어야 사진의 노란 밑줄이 사라집니다!
+# 기존 import io를 아래처럼 구체적으로 바꿔주세요.
+from io import BytesIO
 import time
 import re
 import uuid
@@ -17,9 +18,13 @@ load_dotenv()
 
 @st.cache_resource
 def get_engine():
-    # Secrets 대신 '직접 주소'를 넣어서 시스템 문제인지 판별합니다.
-    direct_url = "postgresql+psycopg2://neondb_owner:npg_re500FBsHJMc@ep-damp-truth-a1fd8zr7-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-    return create_engine(direct_url, pool_pre_ping=True)
+    # 다시 Secrets 설정값을 읽어오도록 원복합니다.
+    # 이렇게 해둬야 나중에 설정창(Secrets)에서 주소만 바꿔도 즉시 반영됩니다.
+    return create_engine(
+        st.secrets["DATABASE_URL"], 
+        pool_pre_ping=True,
+        connect_args={"connect_timeout": 10}
+    )
 
 def run_query(query, params=None, fetch=False):
     engine = get_engine()
