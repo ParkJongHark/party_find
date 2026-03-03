@@ -20,7 +20,8 @@ def get_engine():
         st.secrets["DATABASE_URL"], 
         pool_pre_ping=True,
         connect_args={"connect_timeout": 10}
-    )
+    ) 
+
 
 def run_query(query, params=None, fetch=False):
     engine = get_engine()
