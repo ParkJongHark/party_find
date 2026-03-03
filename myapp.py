@@ -11,27 +11,26 @@ import uuid
 import datetime
 from streamlit_qrcode_scanner import qrcode_scanner
 
+
 # 1. 환경 설정 및 DB 연결
 load_dotenv()
 
 @st.cache_resource
 def get_engine():
-    # 주소 뒤에 연결 옵션을 강제로 추가하여 안정성을 높입니다.
-    return create_engine(
-        st.secrets["DATABASE_URL"],
-        connect_args={
-            "sslmode": "require",
-            "connect_timeout": 10
-        },
-        pool_pre_ping=True,  # 연결이 살아있는지 미리 확인하는 옵션
-        pool_recycle=300     # 5분마다 연결을 새로고침
-    )
+    # Secrets 대신 '직접 주소'를 넣어서 시스템 문제인지 판별합니다.
+    direct_url = "postgresql+psycopg2://neondb_owner:npg_re500FBsHJMc@ep-damp-truth-a1fd8zr7-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+    return create_engine(direct_url, pool_pre_ping=True)
 
 def run_query(query, params=None, fetch=False):
     engine = get_engine()
     with engine.connect() as conn:
+        # text() 객체에 params를 직접 바인딩하여 실행합니다.
         result = conn.execute(text(query), params or {})
-        conn.commit() # SELECT가 아닌 경우 반영을 위해 필요
+        
+        # SELECT 문이 아닐 때만 commit을 명시적으로 호출 (SQLAlchemy 2.0 대응)
+        if not fetch:
+            conn.commit()
+            
         if fetch:
             return result.fetchone()
         return None
