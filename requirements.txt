@@ -1,5 +1,6 @@
 streamlit
 psycopg2-binary
+sqlalchemy
 python-dotenv
 qrcode
 pillow

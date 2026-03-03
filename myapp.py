@@ -1,37 +1,27 @@
 import streamlit as st
-import psycopg2
 import os
-import uuid
-import qrcode
-import re
-from io import BytesIO
-from datetime import datetime, time, timedelta
+from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
-from streamlit_qrcode_scanner import qrcode_scanner
-import urllib.parse as up
+import qrcode
+from PIL import Image
+from io import BytesIO  # 이 줄이 있어야 사진의 노란 밑줄이 사라집니다!
+import time
 
 # 1. 환경 설정 및 DB 연결
 load_dotenv()
 
-def get_connection():
-    # Secrets에서 가져온 URL을 psycopg2가 이해할 수 있게 명확히 파싱합니다.
-    url = up.urlparse(st.secrets["DATABASE_URL"])
-    
-    return psycopg2.connect(
-        dbname=url.path[1:],
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port,
-        sslmode='require' # Neon DB는 SSL 보안 연결이 필수입니다.
-    )
+@st.cache_resource
+def get_engine():
+    return create_engine(st.secrets["DATABASE_URL"])
 
 def run_query(query, params=None, fetch=False):
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, params)
-            if fetch: return cur.fetchall()
-            conn.commit()
+    engine = get_engine()
+    with engine.connect() as conn:
+        result = conn.execute(text(query), params or {})
+        conn.commit() # SELECT가 아닌 경우 반영을 위해 필요
+        if fetch:
+            return result.fetchone()
+        return None
 
 def generate_qr(data):
     qr = qrcode.QRCode(version=1, box_size=10, border=2)
