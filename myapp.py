@@ -29,10 +29,10 @@ def get_engine():
 def run_query(query, params=None, fetch=False):
     engine = get_engine()
     with engine.connect() as conn:
-        # text() 객체에 params를 직접 바인딩하여 실행합니다.
+        # 쿼리를 실행할 때 params를 명확히 전달합니다.
         result = conn.execute(text(query), params or {})
         
-        # SELECT 문이 아닐 때만 commit을 명시적으로 호출 (SQLAlchemy 2.0 대응)
+        # SELECT가 아닌 경우(INSERT/UPDATE 등) 변경사항 반영
         if not fetch:
             conn.commit()
             
