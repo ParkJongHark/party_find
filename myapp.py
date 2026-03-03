@@ -63,7 +63,11 @@ if st.session_state.user is None:
                 st.error("❌ 전화번호 형식이 올바르지 않습니다. (010xxxxyyyy)")
             elif u_nick and u_phone:
                 # 닉네임+번호 일치 조회
-                user = run_query("SELECT id, nickname FROM users WHERE nickname=%s AND phone=%s", (u_nick, u_phone), fetch=True)
+                user = run_query(
+                    "SELECT id, nickname FROM users WHERE nickname = :name AND phone = :phone", 
+                    {"name": u_nick, "phone": u_phone}, 
+                    fetch=True
+                )
                 if user:
                     st.session_state.user = {"id": user[0][0], "nickname": user[0][1]}
                     st.rerun()
