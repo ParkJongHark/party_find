@@ -6,6 +6,10 @@ import qrcode
 from PIL import Image
 from io import BytesIO  # 이 줄이 있어야 사진의 노란 밑줄이 사라집니다!
 import time
+import re
+import uuid
+import datetime
+from streamlit_qrcode_scanner import qrcode_scanner
 
 # 1. 환경 설정 및 DB 연결
 load_dotenv()
