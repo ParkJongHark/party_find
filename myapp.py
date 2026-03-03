@@ -17,10 +17,13 @@ load_dotenv()
 @st.cache_resource
 def get_engine():
     return create_engine(
-        st.secrets["DATABASE_URL"], 
+        st.secrets["DATABASE_URL"],
         pool_pre_ping=True,
-        connect_args={"connect_timeout": 10}
-    ) 
+        connect_args={
+            "connect_timeout": 10,
+            "sslmode": "require"
+        }
+    )
 
 
 def run_query(query, params=None, fetch=False):
