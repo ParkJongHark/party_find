@@ -216,7 +216,9 @@ else:
 
     # [TAB 3. 방 만들기]
     with tab_create:
-        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        from datetime import timezone, timedelta
+        KST = timezone(timedelta(hours=9))
+        today_start = datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
         daily_count_result = run_query(
             "SELECT COUNT(*) FROM meetings WHERE created_at >= :ts",
             {"ts": today_start},
@@ -231,8 +233,10 @@ else:
             
             time_opts = get_time_options()
             
-            now = datetime.now()
-            current_time = now.time()
+            from datetime import timezone, timedelta
+            KST = timezone(timedelta(hours=9))
+            now = datetime.now(KST)
+            current_time = now.time().replace(tzinfo=None)
             def_start_idx = 0
             for i, t in enumerate(time_opts):
                 if t >= current_time:
@@ -251,7 +255,9 @@ else:
                 e_t = col2.selectbox("종료 시간", time_opts, index=def_end_idx, format_func=lambda x: x.strftime('%H:%M'))
                 
                 if st.form_submit_button("방 생성"):
-                    now_dt = datetime.now()
+                    from datetime import timezone, timedelta
+                    KST = timezone(timedelta(hours=9))
+                    now_dt = datetime.now(KST).replace(tzinfo=None)
                     s_dt = datetime.combine(now_dt.date(), s_t)
                     e_dt = datetime.combine(now_dt.date(), e_t)
                     
