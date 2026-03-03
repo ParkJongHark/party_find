@@ -105,7 +105,7 @@ else:
     with tab_list:
         meetings = run_query("""
             SELECT m.id, m.title, m.target_count, m.status, u.nickname,
-                   (SELECT COUNT(*) FROM attendance WHERE meeting_id=m.id AND status='confirmed') as c_count,
+                   (SELECT COUNT(*) FROM attendance WHERE meeting_id=m.id AND status IN ('pending','confirmed')) as c_count,
                    m.description, m.start_at, m.end_at
             FROM meetings m JOIN users u ON m.user_id=u.id
             WHERE m.status != '종료' ORDER BY m.created_at DESC
@@ -157,7 +157,7 @@ else:
                     {"mid": h[0]},
                     fetch=True
                 )
-                conf_count = len([m for m in mems if m[1] == 'confirmed']) if mems else 0
+                conf_count = len([m for m in mems if m[1] in ('confirmed', 'pending')]) if mems else 0
                 st.write(f"🔥 현재 출석 인원: **{conf_count} / {h[2]}**")
 
                 if st.button("📸 QR 출석체크 시작", key=f"btn_scan_{h[0]}"):
