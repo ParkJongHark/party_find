@@ -8,13 +8,23 @@ from io import BytesIO
 from datetime import datetime, time, timedelta
 from dotenv import load_dotenv
 from streamlit_qrcode_scanner import qrcode_scanner
+import urllib.parse as up
 
 # 1. 환경 설정 및 DB 연결
 load_dotenv()
 
 def get_connection():
-    # Streamlit Cloud의 Secrets에서 직접 주소를 가져옵니다.
-    return psycopg2.connect(st.secrets["DATABASE_URL"])
+    # Secrets에서 가져온 URL을 psycopg2가 이해할 수 있게 명확히 파싱합니다.
+    url = up.urlparse(st.secrets["DATABASE_URL"])
+    
+    return psycopg2.connect(
+        dbname=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port,
+        sslmode='require' # Neon DB는 SSL 보안 연결이 필수입니다.
+    )
 
 def run_query(query, params=None, fetch=False):
     with get_connection() as conn:
