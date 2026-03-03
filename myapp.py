@@ -16,7 +16,16 @@ load_dotenv()
 
 @st.cache_resource
 def get_engine():
-    return create_engine(st.secrets["DATABASE_URL"])
+    # 주소 뒤에 연결 옵션을 강제로 추가하여 안정성을 높입니다.
+    return create_engine(
+        st.secrets["DATABASE_URL"],
+        connect_args={
+            "sslmode": "require",
+            "connect_timeout": 10
+        },
+        pool_pre_ping=True,  # 연결이 살아있는지 미리 확인하는 옵션
+        pool_recycle=300     # 5분마다 연결을 새로고침
+    )
 
 def run_query(query, params=None, fetch=False):
     engine = get_engine()
