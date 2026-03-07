@@ -171,7 +171,7 @@ else:
                     continue
 
                 st.subheader(f"📍 {h[1]}")
-                st.write(f"now: {now_kst}, end_at: {end_at}, is_ended: {is_ended}")
+                
                 
                 mems = run_query(
                     "SELECT u.nickname, a.status, u.id FROM attendance a JOIN users u ON a.user_id=u.id WHERE a.meeting_id=:mid",
