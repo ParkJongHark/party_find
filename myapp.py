@@ -143,15 +143,33 @@ else:
                             st.rerun()
         else:
             st.info("현재 모집 중인 모임이 없습니다.")
+    # [TAB 2. 방장 관리]
     with tab_manage:
+        from datetime import timezone, timedelta
+        KST = timezone(timedelta(hours=9))
+        now_kst = datetime.now(KST).replace(tzinfo=None)
+
         my_hosting = run_query(
-            "SELECT id, title, target_count, status FROM meetings WHERE user_id=:uid AND status!='종료'",
+            "SELECT id, title, target_count, status, end_at FROM meetings WHERE user_id=:uid AND status!='종료'",
             {"uid": st.session_state.user['id']},
             fetch=True
         )
         
         if my_hosting:
             for h in my_hosting:
+                end_at = h[4]
+                is_ended = now_kst > end_at
+                is_expired = (now_kst - end_at).total_seconds() > 7200 if is_ended else False
+
+                if is_expired:
+                    st.markdown(f"""
+                        <div style="background:#f0f0f0; border-radius:10px; padding:16px; color:#aaa; margin-bottom:16px;">
+                            <h4>📍 {h[1]}</h4>
+                            <p>🚫 종료된 모임입니다.</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    continue
+
                 st.subheader(f"📍 {h[1]}")
                 
                 mems = run_query(
@@ -162,34 +180,37 @@ else:
                 conf_count = len([m for m in mems if m[1] == 'confirmed']) if mems else 0
                 st.write(f"🔥 현재 출석 인원: **{conf_count} / {h[2]}**")
 
-                if st.button("📸 QR 출석체크 시작", key=f"btn_scan_{h[0]}"):
-                    st.session_state[f"scan_active_{h[0]}"] = True
-                
-                if st.session_state.get(f"scan_active_{h[0]}", False):
-                    sc_val = qrcode_scanner(key=f"scanner_{h[0]}")
-                    if sc_val:
-                        if sc_val.startswith("USER:"):
-                            _, mid, uid = sc_val.split(":")
-                            if mid == h[0]:
-                                already = run_query(
-                                    "SELECT status FROM attendance WHERE meeting_id=:mid AND user_id=:uid",
-                                    {"mid": mid, "uid": uid},
-                                    fetch=True
-                                )
-                                if already and already[0][0] == 'pending':
-                                    run_query(
-                                        "UPDATE attendance SET status='confirmed' WHERE meeting_id=:mid AND user_id=:uid",
-                                        {"mid": mid, "uid": uid}
+                if not is_ended:
+                    if st.button("📸 QR 출석체크 시작", key=f"btn_scan_{h[0]}"):
+                        st.session_state[f"scan_active_{h[0]}"] = True
+                    
+                    if st.session_state.get(f"scan_active_{h[0]}", False):
+                        sc_val = qrcode_scanner(key=f"scanner_{h[0]}")
+                        if sc_val:
+                            if sc_val.startswith("USER:"):
+                                _, mid, uid = sc_val.split(":")
+                                if mid == h[0]:
+                                    already = run_query(
+                                        "SELECT status FROM attendance WHERE meeting_id=:mid AND user_id=:uid",
+                                        {"mid": mid, "uid": uid},
+                                        fetch=True
                                     )
-                                    st.success("출석 인정!")
-                                elif already and already[0][0] == 'confirmed':
-                                    st.info("이미 출석 처리된 파티원이에요.")
+                                    if already and already[0][0] == 'pending':
+                                        run_query(
+                                            "UPDATE attendance SET status='confirmed' WHERE meeting_id=:mid AND user_id=:uid",
+                                            {"mid": mid, "uid": uid}
+                                        )
+                                        st.success("출석 인정!")
+                                    elif already and already[0][0] == 'confirmed':
+                                        st.info("이미 출석 처리된 파티원이에요.")
+                                    else:
+                                        st.error("❌ 신청하지 않은 사람이에요.")
+                                    st.session_state[f"scan_active_{h[0]}"] = False
+                                    st.rerun()
                                 else:
-                                    st.error("❌ 신청하지 않은 사람이에요.")
-                                st.session_state[f"scan_active_{h[0]}"] = False
-                                st.rerun()
-                            else:
-                                st.error("❌ 우리 파티원이 아니에요.")
+                                    st.error("❌ 우리 파티원이 아니에요.")
+                else:
+                    st.warning("⏰ 모임 시간이 종료되었습니다. QR 출석체크를 할 수 없어요.")
 
                 if conf_count >= (h[2] / 2):
                     st.divider()
@@ -225,7 +246,6 @@ else:
                 st.divider()
         else:
             st.info("현재 관리 중인 활성화된 모임이 없습니다.")
-
     # [TAB 3. 방 만들기]
     with tab_create:
         from datetime import timezone, timedelta
