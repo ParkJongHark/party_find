@@ -105,10 +105,12 @@ else:
     with tab_list:
         meetings = run_query("""
             SELECT m.id, m.title, m.target_count, m.status, u.nickname,
-                   (SELECT COUNT(*) FROM attendance WHERE meeting_id=m.id AND status IN ('pending','confirmed')) as c_count,
-                   m.description, m.start_at, m.end_at
+                (SELECT COUNT(*) FROM attendance WHERE meeting_id=m.id AND status IN ('pending','confirmed')) as c_count,
+                m.description, m.start_at, m.end_at
             FROM meetings m JOIN users u ON m.user_id=u.id
-            WHERE m.status != '종료' ORDER BY m.created_at DESC
+            WHERE m.status != '종료' 
+            AND m.end_at > NOW() AT TIME ZONE 'Asia/Seoul'
+            ORDER BY m.created_at DESC
         """, fetch=True)
         if meetings:
             for m in meetings:
@@ -139,8 +141,8 @@ else:
                                 {"mid": m[0], "uid": st.session_state.user['id']}
                             )
                             st.rerun()
-
-    # [TAB 2. 방장 관리]
+        else:
+            st.info("현재 모집 중인 모임이 없습니다.")
     with tab_manage:
         my_hosting = run_query(
             "SELECT id, title, target_count, status FROM meetings WHERE user_id=:uid AND status!='종료'",
